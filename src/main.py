@@ -18,11 +18,11 @@ class Layer_Dense:
         self.inputs = inputs
         self.output = np.dot(inputs, self.weights) + self.biases
 
-    def backward(self, dvalues):
-        self.dweights = np.dot(self.inputs.T, dvalues)
-        self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
-
-        self.dinputs = np.dot(dvalues, self.weights.T)
+    # def backward(self, dvalues):
+    #     self.dweights = np.dot(self.inputs.T, dvalues)
+    #     self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
+    #
+    #     self.dinputs = np.dot(dvalues, self.weights.T)
 
 
 class Actiavtion_ReLU:
@@ -30,9 +30,9 @@ class Actiavtion_ReLU:
         self.output = np.maximum(0, inputs)
         self.inputs = inputs
 
-    def backward(self, dvalues):
-        drelu = np.where(self.inputs > 0, 1, 0)
-        self.dinputs = dvalues * drelu
+    # def backward(self, dvalues):
+    #     drelu = np.where(self.inputs > 0, 1, 0)
+    #     self.dinputs = dvalues * drelu
 
 
 class Activation_Softmax:
@@ -42,17 +42,17 @@ class Activation_Softmax:
         self.output = probabilities
         self.inputs = inputs
 
-    def backward(self, dvalues):
-        batch_size = len(self.output)
-
-        dsoftmax = np.zeros_like(self.inputs)
-
-        for i, (softmax, dvalue) in enumerate(zip(self.output, dvalues)):
-            softmax = softmax.reshape(-1, 1)
-            jacobian_matrix = np.diagflat(softmax) - np.dot(softmax, softmax.T)
-            dsoftmax[i, :] = np.dot(jacobian_matrix, dvalue)
-
-        self.dinputs = dsoftmax / batch_size
+    # def backward(self, dvalues):
+    #     batch_size = len(self.output)
+    #
+    #     dsoftmax = np.zeros_like(self.inputs)
+    #
+    #     for i, (softmax, dvalue) in enumerate(zip(self.output, dvalues)):
+    #         softmax = softmax.reshape(-1, 1)
+    #         jacobian_matrix = np.diagflat(softmax) - np.dot(softmax, softmax.T)
+    #         dsoftmax[i, :] = np.dot(jacobian_matrix, dvalue)
+    #
+    #     self.dinputs = dsoftmax / batch_size
 
 
 class Loss:
@@ -76,21 +76,21 @@ class Loss_CatagoricalCrossentropy(Loss):
         negative_log_likelihoods = -np.log(correct_confidences)
         return negative_log_likelihoods
 
-    def backward(self, output, y):
-        gradients = self.gradient(output, y)
-        return gradients
+    # def backward(self, output, y):
+    #     gradients = self.gradient(output, y)
+    #     return gradients
 
-    def gradient(self, output, y):
-        samples = len(output)
-
-        if len(y.shape) == 1:
-            y_true = np.eye(len(output[0]))[y]
-        else:
-            y_true = y
-
-        grad = (output -y_true) / samples
-
-        return grad
+    # def gradient(self, output, y):
+    #     samples = len(output)
+    #
+    #     if len(y.shape) == 1:
+    #         y_true = np.eye(len(output[0]))[y]
+    #     else:
+    #         y_true = y
+    #
+    #     grad = (output -y_true) / samples
+    #
+    #     return grad
 
 
 # Data
@@ -122,6 +122,13 @@ best_dense2_biases = dense2.weights.copy()
 learning_rate = 0.1
 
 for iteration in range(1000000):
+
+    # NEED TO HAVE OPTIMIZER BEFORE CALCULATIONS
+    dense1.weights += 0.05 * np.random.randn(2, 3)
+    dense1.biases += 0.05 * np.random.randn(1, 3)
+    dense2.weights += 0.05 * np.random.randn(3, 3)
+    dense2.biases += 0.05 * np.random.randn(1, 3)
+
     # Forward pass
     dense1.forward(X)
     activation1.forward(dense1.output)
@@ -135,19 +142,20 @@ for iteration in range(1000000):
     accuracy = np.mean(predictions == y)
 
     # Backward pass
-    activation2.backward(loss_function.gradient(activation2.output, y))
-    dense2.backward(activation2.dinputs)
-    activation1.backward(dense2.inputs)
-    dense1.backward(activation1.dinputs)
+    #activation2.backward(loss_function.gradient(activation2.output, y))
+    #dense2.backward(activation2.dinputs)
+    #activation1.backward(dense2.inputs)
+    #dense1.backward(activation1.dinputs)
 
     learning_rate *= 0.99
-    print(learning_rate)
 
-    # Optimizer
-    dense1.weights -= learning_rate * dense1.dweights
-    dense1.biases -= learning_rate * dense1.dbiases
-    dense2.weights -= learning_rate * dense2.dweights
-    dense2.biases -= learning_rate * dense2.dbiases
+    # # Optimizer
+    # dense1.weights -= learning_rate * dense1.dweights
+    # dense1.biases -= learning_rate * dense1.dbiases
+    # dense2.weights -= learning_rate * dense2.dweights
+    # dense2.biases -= learning_rate * dense2.dbiases
+
+
 
     if loss < lowest_loss:
         print('New set of weights found iteration:', iteration, 'loss', loss, 'acc:', accuracy)
@@ -158,22 +166,20 @@ for iteration in range(1000000):
         lowest_loss = loss
 
         # writes the best data
-        df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
-        df.to_csv('data.csv', index=False)
+        # df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
+        # df.to_csv('data.csv', index=False)
 
     else:
-        #print('New set of weights found iteration:', iteration, 'loss', loss, 'acc:', accuracy)
-
         dense1.weights = best_dense1_weights.copy()
         dense1.biases = best_dense1_biases.copy()
         dense2.weights = best_dense2_weights.copy()
         dense2.biases = best_dense2_biases.copy()
 
-        df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
-        df.to_csv('data.csv', index=False)
+        # df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
+        # df.to_csv('data.csv', index=False)
 
-plt.scatter(X[:, 0], X[:, 1], c=predictions, s=40, cmap='brg')
-plt.show()
-
-plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='brg')
-plt.show()
+# plt.scatter(X[:, 0], X[:, 1], c=predictions, s=40, cmap='brg')
+# plt.show()
+#
+# plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='brg')
+# plt.show()
