@@ -166,8 +166,8 @@ for iteration in range(1000000):
         lowest_loss = loss
 
         # writes the best data
-        # df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
-        # df.to_csv('data.csv', index=False)
+        df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
+        df.to_csv('data.csv', index=False)
 
     else:
         dense1.weights = best_dense1_weights.copy()
@@ -178,8 +178,8 @@ for iteration in range(1000000):
         # df = pd.DataFrame({'X': X[:, 0], 'Y': X[:, 1], 'class': predictions})
         # df.to_csv('data.csv', index=False)
 
-# plt.scatter(X[:, 0], X[:, 1], c=predictions, s=40, cmap='brg')
-# plt.show()
-#
-# plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='brg')
-# plt.show()
+plt.scatter(X[:, 0], X[:, 1], c=predictions, s=40, cmap='brg')
+plt.show()
+
+plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='brg')
+plt.show()
